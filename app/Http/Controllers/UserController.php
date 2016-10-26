@@ -4,18 +4,10 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\JWTAuth;
 
 class UserController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        
-    }
 
     public function index()
     {
@@ -61,6 +53,25 @@ class UserController extends Controller
         $user->delete();
 
         return "User berhasil di delete";
+    }
+
+    public function token(JWTAuth $jwt)
+    {
+        return $jwt->parseToken()->toUser();
+    }
+
+    public function postLogin(Request $request, JWTAuth $jwt)
+    {
+        $this->validate($request, [
+            'email' => 'required|email|exists:users',
+            'password' => 'required|string'
+        ]);
+
+        if (! $token = $jwt->attempt($request->only(['email', 'password']))) {
+            return response()->json(['user_not_found'], 404);
+        }
+
+        return response()->json(compact('token'));
     }
 
 }
